@@ -1,5 +1,10 @@
+#include "core.h"
+#include "bgfx_math.h"
+
 #include <SDL3/SDL.h>
 #include <bgfx/c99/bgfx.h>
+
+#include "bgfx_math.c"
 
 int ScreenWidth = 1280;
 int ScreenHeight = 720;
