@@ -174,12 +174,16 @@ int main(int argc, char* argv[]) {
 
   SDL_ShowWindow(window);
 
+  u64 timeOffset = SDL_GetPerformanceCounter();
+
   SDL_bool quit = false;
 
-  HMM_Vec3 at = {0.0f, 0.0f, 0.0f};
-  HMM_Vec3 eye = {0.0f, 0.0f, -35.0f};
-  HMM_Vec3 up = {0.0f, 1.0f, 0.0f};
-  HMM_Mat4 view = HMM_LookAt_RH(eye, at, up);
+  Vec3 at = {0.0f, 0.0f, 0.0f};
+  Vec3 eye = {0.0f, 0.0f, -15.0f};
+  Vec3 up = {0.0f, 1.0f, 0.0f};
+  Mat4 view = LookAt_RH(eye, at, up);
+
+  int pt = 0;
   while (!quit) {
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
@@ -194,15 +198,55 @@ int main(int argc, char* argv[]) {
             } break;
           }
         } break;
+        case SDL_EVENT_KEY_UP: {
+          switch (event.key.keysym.scancode) {
+            case SDL_SCANCODE_LEFT: {
+              pt -= 1;
+              if (pt < 0) {
+                pt = SDL_arraysize(ptNames) - 1;
+              }
+            } break;
+            case SDL_SCANCODE_RIGHT: {
+              pt = (pt + 1) % SDL_arraysize(ptNames);
+            }
+          }
+        }
       }
     }
+    f32 time = (f32)((SDL_GetPerformanceCounter() - timeOffset) /
+                     (f64)SDL_GetPerformanceFrequency());
 
     int width, height;
     SDL_GetWindowSize(window, &width, &height);
+    Mat4 proj =
+        Perspective_RH_ZO(55.0f, (f32)(width) / (f32)(height), 0.1f, 100.0f);
+
     bgfx_set_view_rect(0, 0, 0, (uint16_t)width, (uint16_t)height);
+    bgfx_set_view_transform(0, view.Elements, proj.Elements);
 
     bgfx_encoder_t* encoder = bgfx_encoder_begin(true);
     bgfx_encoder_touch(encoder, 0);
+    bgfx_index_buffer_handle_t frame_ibh = ibh[pt];
+    u64 state = 0 | BGFX_STATE_WRITE_MASK | BGFX_STATE_DEPTH_TEST_LESS |
+                BGFX_STATE_CULL_CW | BGFX_STATE_MSAA | ptState[pt];
+
+    for (u32 yy = 0; yy < 11; ++yy) {
+      for (u32 xx = 0; xx < 11; ++xx) {
+        Mat4 xrot = Rotate_RH(time + xx * 0.21f, V3(1.0f, 0.0f, 0.0f));
+        Mat4 yrot = Rotate_RH(time + yy * 0.37f, V3(0.0f, 1.0f, 0.0f));
+        Mat4 rot = MulM4(yrot, xrot);
+        rot.Elements[3][0] = -15.0f + (f32)xx * 3.0f;
+        rot.Elements[3][1] = -15.0f + (f32)yy * 3.0f;
+        rot.Elements[3][2] = 0.0f;
+
+        bgfx_encoder_set_transform(encoder, rot.Elements, 1);
+
+        bgfx_encoder_set_vertex_buffer(encoder, 0, vbh, 0, UINT32_MAX);
+        bgfx_encoder_set_index_buffer(encoder, frame_ibh, 0, UINT32_MAX);
+        bgfx_encoder_set_state(encoder, state, 0);
+        bgfx_encoder_submit(encoder, 0, program, 0, BGFX_DISCARD_ALL);
+      }
+    }
     bgfx_encoder_end(encoder);
 
     bgfx_dbg_text_clear(0, false);
