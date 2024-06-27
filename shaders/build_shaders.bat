@@ -1,5 +1,9 @@
 @echo off
+setlocal enabledelayedexpansion
 
+set vs_prefix="vs_"
+set fs_prefix="fs_"
+set cs_prefix="cs_"
 set platform="--platform windows"
 set vs_dx_flags=-p s_5_0 -O 3
 set fs_dx_flags=-p s_5_0 -O 3
@@ -19,17 +23,28 @@ if not exist %dx_shader_path% mkdir %dx_shader_path%
 if not exist %gl_shader_path% mkdir %gl_shader_path%
 if not exist %spirv_shader_path% mkdir %spirv_shader_path%
 
+echo Compiling shaders...
 for %%f in (vs_*.sc) do (
-  call %shdc% %platform% %vs_dx_flags% --type vertex --depends -o %dx_shader_path%/%%~nf.bin -f %%f
-  call %shdc% %platform% %vs_gl_flags% --type vertex --depends -o %gl_shader_path%/%%~nf.bin -f %%f
-  call %shdc% %platform% %vs_spirv_flags% --type vertex --depends -o %spirv_shader_path%/%%~nf.bin -f %%f
+  set fullval=%%~nf
+  echo !fullval!
+  set substr=!fullval:~3!
+  @REM echo !substr!
+  call %shdc% %platform% %vs_dx_flags% --type vertex --depends --varyingdef !substr!.def.sc -o %dx_shader_path%/%%~nf.bin -f %%f
+  call %shdc% %platform% %vs_gl_flags% --type vertex --depends --varyingdef !substr!.def.sc -o %gl_shader_path%/%%~nf.bin -f %%f
+  call %shdc% %platform% %vs_spirv_flags% --type vertex --depends --varyingdef !substr!.def.sc -o %spirv_shader_path%/%%~nf.bin -f %%f
 )
 for %%f in (fs_*.sc) do (
-  call %shdc% %platform% %vs_dx_flags% --type fragment --depends -o %dx_shader_path%/%%~nf.bin -f %%f
-  call %shdc% %platform% %vs_gl_flags% --type fragment --depends -o %gl_shader_path%/%%~nf.bin -f %%f
-  call %shdc% %platform% %vs_spirv_flags% --type fragment --depends -o %spirv_shader_path%/%%~nf.bin -f %%f
+  set fullval=%%~nf
+  echo !fullval!
+  set substr=!fullval:~3!
+  call %shdc% %platform% %vs_dx_flags% --type fragment --depends --varyingdef !substr!.def.sc -o %dx_shader_path%/%%~nf.bin -f %%f
+  call %shdc% %platform% %vs_gl_flags% --type fragment --depends --varyingdef !substr!.def.sc -o %gl_shader_path%/%%~nf.bin -f %%f
+  call %shdc% %platform% %vs_spirv_flags% --type fragment --depends --varyingdef !substr!.def.sc -o %spirv_shader_path%/%%~nf.bin -f %%f
 )
 for %%f in (cs_*.sc) do (
+  set fullval=%%~nf
+  echo !fullval!
+  set substr=!fullval:~3!
   call %shdc% %platform% %vs_dx_flags% --type compute --depends -o %dx_shader_path%/%%~nf.bin -f %%f
   call %shdc% %platform% %vs_gl_flags% --type compute --depends -o %gl_shader_path%/%%~nf.bin -f %%f
   call %shdc% %platform% %vs_spirv_flags% --type compute --depends -o %spirv_shader_path%/%%~nf.bin -f %%f
