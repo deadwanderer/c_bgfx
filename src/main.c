@@ -175,6 +175,11 @@ int main(int argc, char* argv[]) {
   SDL_ShowWindow(window);
 
   SDL_bool quit = false;
+
+  HMM_Vec3 at = {0.0f, 0.0f, 0.0f};
+  HMM_Vec3 eye = {0.0f, 0.0f, -35.0f};
+  HMM_Vec3 up = {0.0f, 1.0f, 0.0f};
+  HMM_Mat4 view = HMM_LookAt_RH(eye, at, up);
   while (!quit) {
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
@@ -192,7 +197,9 @@ int main(int argc, char* argv[]) {
       }
     }
 
-    bgfx_set_view_rect(0, 0, 0, (uint16_t)ScreenWidth, (uint16_t)ScreenHeight);
+    int width, height;
+    SDL_GetWindowSize(window, &width, &height);
+    bgfx_set_view_rect(0, 0, 0, (uint16_t)width, (uint16_t)height);
 
     bgfx_encoder_t* encoder = bgfx_encoder_begin(true);
     bgfx_encoder_touch(encoder, 0);
