@@ -1,14 +1,10 @@
-#include "core.h"
-#include "bgfx_math.h"
+#include "base/base_inc.h"
 
 #include <SDL3/SDL.h>
-#include <bgfx/c99/bgfx.h>
-#include "mesh_utils.h"
-#include "shader_utils.h"
+#include "render/render_inc.h"
 
-#include "bgfx_math.c"
-#include "mesh_utils.c"
-#include "shader_utils.c"
+#include "base/base_inc.c"
+#include "render/render_inc.c"
 
 int ScreenWidth = 1280;
 int ScreenHeight = 720;
