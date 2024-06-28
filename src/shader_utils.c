@@ -48,13 +48,14 @@ local bgfx_shader_handle_t load_shader(const char* shader_name) {
   return result;
 }
 
-local bgfx_program_handle_t load_program(const char* vertex_shader_name,
-                                         const char* fragment_shader_name) {
-  bgfx_shader_handle_t vsh = load_shader(vertex_shader_name);
-  bgfx_shader_handle_t fsh = BGFX_INVALID_HANDLE;
-  if (fragment_shader_name != 0) {
-    fsh = load_shader(fragment_shader_name);
-  }
+local bgfx_program_handle_t load_program(const char* shader_base_name) {
+  char buf[1024];
+  int endchar = sprintf_s(buf, 1024, "%s%s", "vs_", shader_base_name);
+  buf[endchar] = 0;
+  bgfx_shader_handle_t vsh = load_shader(buf);
+  endchar = sprintf_s(buf, 1024, "%s%s", "fs_", shader_base_name);
+  buf[endchar] = 0;
+  bgfx_shader_handle_t fsh = load_shader(buf);
 
   return bgfx_create_program(vsh, fsh, true);
 }

@@ -53,10 +53,11 @@ if not exist build mkdir build
 :: --- Get Current Git Commit Id ----------------------------------------------
 @REM for /f %%i in ('call git describe --always --dirty') do set compile=%compile% -DBUILD_GIT_HASH=\"%%i\"
 
+:: --- Build Meshes ---------------------------------------
+if "%assets%"=="1" call build_assets.bat 
+
 :: --- Compile Shaders ------------------------------------
-pushd shaders
 call build_shaders.bat
-popd
 
 :: --- Compile Program -------------------------------------
 pushd build
