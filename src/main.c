@@ -3,9 +3,11 @@
 
 #include <SDL3/SDL.h>
 #include <bgfx/c99/bgfx.h>
+#include "mesh_utils.h"
 #include "shader_utils.h"
 
 #include "bgfx_math.c"
+#include "mesh_utils.c"
 #include "shader_utils.c"
 
 int ScreenWidth = 1280;
@@ -31,80 +33,80 @@ static bgfx_vertex_layout_t PosColorVertexLayout() {
   return result;
 }
 
-local PosColorVertex cubeVertices[] = {
-    {-1.0f, 1.0f, 1.0f, 0xFF000000},   {1.0f, 1.0f, 1.0f, 0xFF0000FF},
-    {-1.0f, -1.0f, 1.0f, 0xFF00FF00},  {1.0f, -1.0f, 1.0f, 0xFF00FFFF},
-    {-1.0f, 1.0f, -1.0f, 0xFFFF0000},  {1.0f, 1.0f, -1.0f, 0xFFFF00FF},
-    {-1.0f, -1.0f, -1.0f, 0xFFFFFF00}, {1.0f, -1.0f, -1.0f, 0xFFFFFFFF},
-};
+// local PosColorVertex cubeVertices[] = {
+//     {-1.0f, 1.0f, 1.0f, 0xFF000000},   {1.0f, 1.0f, 1.0f, 0xFF0000FF},
+//     {-1.0f, -1.0f, 1.0f, 0xFF00FF00},  {1.0f, -1.0f, 1.0f, 0xFF00FFFF},
+//     {-1.0f, 1.0f, -1.0f, 0xFFFF0000},  {1.0f, 1.0f, -1.0f, 0xFFFF00FF},
+//     {-1.0f, -1.0f, -1.0f, 0xFFFFFF00}, {1.0f, -1.0f, -1.0f, 0xFFFFFFFF},
+// };
 
-local const u16 cubeTriList[] = {
-    0, 1, 2, 1, 3, 2, 4, 6, 5, 5, 6, 7, 0, 2, 4, 4, 2, 6,
-    1, 5, 3, 5, 7, 3, 0, 4, 1, 4, 5, 1, 2, 3, 6, 6, 3, 7,
-};
+// local const u16 cubeTriList[] = {
+//     0, 1, 2, 1, 3, 2, 4, 6, 5, 5, 6, 7, 0, 2, 4, 4, 2, 6,
+//     1, 5, 3, 5, 7, 3, 0, 4, 1, 4, 5, 1, 2, 3, 6, 6, 3, 7,
+// };
 
-local const u16 cubeTriStrip[] = {
-    0, 1, 2, 3, 7, 1, 5, 0, 4, 2, 6, 7, 4, 5,
-};
+// local const u16 cubeTriStrip[] = {
+//     0, 1, 2, 3, 7, 1, 5, 0, 4, 2, 6, 7, 4, 5,
+// };
 
-local const u16 cubeLineList[] = {
-    0, 1, 0, 2, 0, 4, 1, 3, 1, 5, 2, 3, 2, 6, 3, 7, 4, 5, 4, 6, 5, 7, 6, 7,
-};
+// local const u16 cubeLineList[] = {
+//     0, 1, 0, 2, 0, 4, 1, 3, 1, 5, 2, 3, 2, 6, 3, 7, 4, 5, 4, 6, 5, 7, 6, 7,
+// };
 
-local const u16 cubeLineStrip[] = {0, 2, 3, 1, 5, 7, 6, 4, 0,
-                                   2, 6, 4, 5, 7, 3, 1, 0};
+// local const u16 cubeLineStrip[] = {0, 2, 3, 1, 5, 7, 6, 4, 0,
+//                                    2, 6, 4, 5, 7, 3, 1, 0};
 
-local const u16 cubePoints[] = {
-    0, 1, 2, 3, 4, 5, 6, 7,
-};
+// local const u16 cubePoints[] = {
+//     0, 1, 2, 3, 4, 5, 6, 7,
+// };
 
-local const char* ptNames[] = {
-    "Triangle List", "Triangle Strip", "Lines", "Line Strip", "Points",
-};
+// local const char* ptNames[] = {
+//     "Triangle List", "Triangle Strip", "Lines", "Line Strip", "Points",
+// };
 
-local const u64 ptState[] = {
-    UINT64_C(0),          BGFX_STATE_PT_TRISTRIP,
-    BGFX_STATE_PT_LINES,  BGFX_STATE_PT_LINESTRIP,
-    BGFX_STATE_PT_POINTS,
-};
+// local const u64 ptState[] = {
+//     UINT64_C(0),          BGFX_STATE_PT_TRISTRIP,
+//     BGFX_STATE_PT_LINES,  BGFX_STATE_PT_LINESTRIP,
+//     BGFX_STATE_PT_POINTS,
+// };
 
-root_function char* renderer_type_to_string(bgfx_renderer_type_t type) {
-  switch (type) {
-    case BGFX_RENDERER_TYPE_NOOP: {
-      return "NOOP";
-    } break;
-    case BGFX_RENDERER_TYPE_AGC: {
-      return "AGC";
-    } break;
-    case BGFX_RENDERER_TYPE_DIRECT3D11: {
-      return "DIRECT3D11";
-    } break;
-    case BGFX_RENDERER_TYPE_DIRECT3D12: {
-      return "DIRECT3D12";
-    } break;
-    case BGFX_RENDERER_TYPE_GNM: {
-      return "GNM";
-    } break;
-    case BGFX_RENDERER_TYPE_METAL: {
-      return "METAL";
-    } break;
-    case BGFX_RENDERER_TYPE_NVN: {
-      return "NVN";
-    } break;
-    case BGFX_RENDERER_TYPE_OPENGLES: {
-      return "OPENGLES";
-    } break;
-    case BGFX_RENDERER_TYPE_OPENGL: {
-      return "OPENGL";
-    } break;
-    case BGFX_RENDERER_TYPE_VULKAN: {
-      return "VULKAN";
-    } break;
-    default: {
-      return "";
-    } break;
-  }
-}
+// root_function char* renderer_type_to_string(bgfx_renderer_type_t type) {
+//   switch (type) {
+//     case BGFX_RENDERER_TYPE_NOOP: {
+//       return "NOOP";
+//     } break;
+//     case BGFX_RENDERER_TYPE_AGC: {
+//       return "AGC";
+//     } break;
+//     case BGFX_RENDERER_TYPE_DIRECT3D11: {
+//       return "DIRECT3D11";
+//     } break;
+//     case BGFX_RENDERER_TYPE_DIRECT3D12: {
+//       return "DIRECT3D12";
+//     } break;
+//     case BGFX_RENDERER_TYPE_GNM: {
+//       return "GNM";
+//     } break;
+//     case BGFX_RENDERER_TYPE_METAL: {
+//       return "METAL";
+//     } break;
+//     case BGFX_RENDERER_TYPE_NVN: {
+//       return "NVN";
+//     } break;
+//     case BGFX_RENDERER_TYPE_OPENGLES: {
+//       return "OPENGLES";
+//     } break;
+//     case BGFX_RENDERER_TYPE_OPENGL: {
+//       return "OPENGL";
+//     } break;
+//     case BGFX_RENDERER_TYPE_VULKAN: {
+//       return "VULKAN";
+//     } break;
+//     default: {
+//       return "";
+//     } break;
+//   }
+// }
 
 int main(int argc, char* argv[]) {
   if (SDL_Init(SDL_INIT_VIDEO) < 0) {
@@ -133,44 +135,49 @@ int main(int argc, char* argv[]) {
 
   bgfx_set_debug(debug);
 
-  bgfx_renderer_type_t renderers[BGFX_RENDERER_TYPE_COUNT];
+  // bgfx_renderer_type_t renderers[BGFX_RENDERER_TYPE_COUNT];
 
-  for (int i = 0; i < BGFX_RENDERER_TYPE_COUNT; i++) {
-    renderers[i] = BGFX_RENDERER_TYPE_COUNT;
-  }
+  // for (int i = 0; i < BGFX_RENDERER_TYPE_COUNT; i++) {
+  //   renderers[i] = BGFX_RENDERER_TYPE_COUNT;
+  // }
 
-  u8 renderer_count =
-      bgfx_get_supported_renderers(BGFX_RENDERER_TYPE_COUNT, renderers);
+  // u8 renderer_count =
+  //     bgfx_get_supported_renderers(BGFX_RENDERER_TYPE_COUNT, renderers);
 
-  SDL_Log("Supported renderer count: %d\n", renderer_count);
-  for (int i = 0; i < BGFX_RENDERER_TYPE_COUNT; i++) {
-    if (renderers[i] == BGFX_RENDERER_TYPE_COUNT) {
-      continue;
-    }
-    SDL_Log("\t%s", renderer_type_to_string(renderers[i]));
-  }
+  // SDL_Log("Supported renderer count: %d\n", renderer_count);
+  // for (int i = 0; i < BGFX_RENDERER_TYPE_COUNT; i++) {
+  //   if (renderers[i] == BGFX_RENDERER_TYPE_COUNT) {
+  //     continue;
+  //   }
+  //   SDL_Log("\t%s", renderer_type_to_string(renderers[i]));
+  // }
+
+  bgfx_uniform_handle_t timeUniform =
+      bgfx_create_uniform("u_time", BGFX_UNIFORM_TYPE_VEC4, 1);
 
   bgfx_set_view_clear(0, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x303030ff, 1.0f,
                       0);
 
-  bgfx_vertex_layout_t vert_layout = PosColorVertexLayout();
+  // bgfx_vertex_layout_t vert_layout = PosColorVertexLayout();
 
-  bgfx_vertex_buffer_handle_t vbh = bgfx_create_vertex_buffer(
-      bgfx_make_ref(cubeVertices, sizeof(cubeVertices)), &vert_layout, 0);
+  // bgfx_vertex_buffer_handle_t vbh = bgfx_create_vertex_buffer(
+  //     bgfx_make_ref(cubeVertices, sizeof(cubeVertices)), &vert_layout, 0);
 
-  bgfx_index_buffer_handle_t ibh[SDL_arraysize(ptState)];
-  ibh[0] = bgfx_create_index_buffer(
-      bgfx_make_ref(cubeTriList, sizeof(cubeTriList)), 0);
-  ibh[1] = bgfx_create_index_buffer(
-      bgfx_make_ref(cubeTriStrip, sizeof(cubeTriStrip)), 0);
-  ibh[2] = bgfx_create_index_buffer(
-      bgfx_make_ref(cubeLineList, sizeof(cubeLineList)), 0);
-  ibh[3] = bgfx_create_index_buffer(
-      bgfx_make_ref(cubeLineStrip, sizeof(cubeLineStrip)), 0);
-  ibh[4] = bgfx_create_index_buffer(
-      bgfx_make_ref(cubePoints, sizeof(cubePoints)), 0);
+  // bgfx_index_buffer_handle_t ibh[SDL_arraysize(ptState)];
+  // ibh[0] = bgfx_create_index_buffer(
+  //     bgfx_make_ref(cubeTriList, sizeof(cubeTriList)), 0);
+  // ibh[1] = bgfx_create_index_buffer(
+  //     bgfx_make_ref(cubeTriStrip, sizeof(cubeTriStrip)), 0);
+  // ibh[2] = bgfx_create_index_buffer(
+  //     bgfx_make_ref(cubeLineList, sizeof(cubeLineList)), 0);
+  // ibh[3] = bgfx_create_index_buffer(
+  //     bgfx_make_ref(cubeLineStrip, sizeof(cubeLineStrip)), 0);
+  // ibh[4] = bgfx_create_index_buffer(
+  //     bgfx_make_ref(cubePoints, sizeof(cubePoints)), 0);
 
-  bgfx_program_handle_t program = load_program("vs_cubes", "fs_cubes");
+  bgfx_program_handle_t program = load_program("mesh");
+
+  Mesh* mesh = mesh_load("meshes/bunny.bin");
 
   SDL_ShowWindow(window);
 
@@ -178,8 +185,8 @@ int main(int argc, char* argv[]) {
 
   SDL_bool quit = false;
 
-  Vec3 at = {0.0f, 0.0f, 0.0f};
-  Vec3 eye = {0.0f, 0.0f, -15.0f};
+  Vec3 at = {0.0f, 1.0f, 0.0f};
+  Vec3 eye = {0.0f, 1.0f, -2.5f};
   Vec3 up = {0.0f, 1.0f, 0.0f};
   Mat4 view = LookAt_RH(eye, at, up);
 
@@ -201,13 +208,8 @@ int main(int argc, char* argv[]) {
         case SDL_EVENT_KEY_UP: {
           switch (event.key.keysym.scancode) {
             case SDL_SCANCODE_LEFT: {
-              pt -= 1;
-              if (pt < 0) {
-                pt = SDL_arraysize(ptNames) - 1;
-              }
             } break;
             case SDL_SCANCODE_RIGHT: {
-              pt = (pt + 1) % SDL_arraysize(ptNames);
             }
           }
         }
@@ -219,45 +221,26 @@ int main(int argc, char* argv[]) {
     int width, height;
     SDL_GetWindowSize(window, &width, &height);
     Mat4 proj =
-        Perspective_RH_ZO(55.0f, (f32)(width) / (f32)(height), 0.1f, 100.0f);
+        Perspective_RH_ZO(60.0f, (f32)(width) / (f32)(height), 0.1f, 100.0f);
 
     bgfx_set_view_rect(0, 0, 0, (uint16_t)width, (uint16_t)height);
     bgfx_set_view_transform(0, view.Elements, proj.Elements);
+    Mat4 rot = Rotate_RH(time * 0.37f, V3(0.0f, 1.0f, 0.0f));
 
     bgfx_encoder_t* encoder = bgfx_encoder_begin(true);
     bgfx_encoder_touch(encoder, 0);
-    bgfx_index_buffer_handle_t frame_ibh = ibh[pt];
-    u64 state = 0 | BGFX_STATE_WRITE_MASK | BGFX_STATE_DEPTH_TEST_LESS |
-                BGFX_STATE_CULL_CW | BGFX_STATE_MSAA | ptState[pt];
 
-    for (u32 yy = 0; yy < 11; ++yy) {
-      for (u32 xx = 0; xx < 11; ++xx) {
-        Mat4 xrot = Rotate_RH(time + xx * 0.21f, V3(1.0f, 0.0f, 0.0f));
-        Mat4 yrot = Rotate_RH(time + yy * 0.37f, V3(0.0f, 1.0f, 0.0f));
-        Mat4 rot = MulM4(yrot, xrot);
-        rot.Elements[3][0] = -15.0f + (f32)xx * 3.0f;
-        rot.Elements[3][1] = -15.0f + (f32)yy * 3.0f;
-        rot.Elements[3][2] = 0.0f;
+    mesh_submit(encoder, mesh, 0, program, rot, BGFX_STATE_MASK);
 
-        bgfx_encoder_set_transform(encoder, rot.Elements, 1);
-
-        bgfx_encoder_set_vertex_buffer(encoder, 0, vbh, 0, UINT32_MAX);
-        bgfx_encoder_set_index_buffer(encoder, frame_ibh, 0, UINT32_MAX);
-        bgfx_encoder_set_state(encoder, state, 0);
-        bgfx_encoder_submit(encoder, 0, program, 0, BGFX_DISCARD_ALL);
-      }
-    }
     bgfx_encoder_end(encoder);
 
     bgfx_dbg_text_clear(0, false);
-    bgfx_dbg_text_printf(0, 2, 0x3f, "Test Text");
+    // bgfx_dbg_text_printf(0, 2, 0x3f, "Test Text");
     bgfx_frame(false);
   }
 
-  for (int i = 0; i < SDL_arraysize(ptState); i++) {
-    bgfx_destroy_index_buffer(ibh[i]);
-  }
-  bgfx_destroy_vertex_buffer(vbh);
+  mesh_unload(mesh);
+  bgfx_destroy_uniform(timeUniform);
   bgfx_destroy_program(program);
 
   bgfx_shutdown();
