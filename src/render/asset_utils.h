@@ -1,5 +1,5 @@
-#ifndef MESH_UTILS_H
-#define MESH_UTILS_H
+#ifndef ASSET_UTILS_H
+#define ASSET_UTILS_H
 
 typedef struct Primitive Primitive;
 struct Primitive {
@@ -27,12 +27,13 @@ struct Group {
 
 typedef struct Mesh Mesh;
 struct Mesh {
+  Arena* arena;
   bgfx_vertex_layout_t layout;
   Group* groups;
   u32 groupCount;
 };
 
-local Mesh* mesh_load(const char* filePath);
+local Mesh* mesh_load(Arena* arena, const char* fileName);
 local void mesh_unload(Mesh* mesh);
 local void mesh_submit(bgfx_encoder_t* encoder,
                        const Mesh* mesh,

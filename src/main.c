@@ -1,9 +1,11 @@
 #include "base/base_inc.h"
+#include "os/os_inc.h"
 
 #include <SDL3/SDL.h>
 #include "render/render_inc.h"
 
 #include "base/base_inc.c"
+#include "os/os_inc.c"
 #include "render/render_inc.c"
 
 int ScreenWidth = 1280;
@@ -117,6 +119,8 @@ int main(int argc, char* argv[]) {
     return -1;
   }
 
+  Arena* resourceArena = ArenaAllocDefault();
+
   void* nwh = SDL_GetProperty(SDL_GetWindowProperties(window),
                               SDL_PROP_WINDOW_WIN32_HWND_POINTER, NULL);
 
@@ -173,7 +177,7 @@ int main(int argc, char* argv[]) {
 
   bgfx_program_handle_t program = load_program("mesh");
 
-  Mesh* mesh = mesh_load("meshes/bunny.bin");
+  Mesh* mesh = mesh_load(&resourceArena, "bunny");
 
   SDL_ShowWindow(window);
 
