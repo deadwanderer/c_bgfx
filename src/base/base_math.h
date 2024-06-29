@@ -407,6 +407,20 @@ typedef union Quat {
 #endif
 } Quat;
 
+typedef struct Aabb {
+  Vec3 min;
+  Vec3 max;
+} Aabb;
+
+typedef struct Obb {
+  Mat4 mtx;
+} Obb;
+
+typedef struct Sphere {
+  Vec3 center;
+  f32 radius;
+} Sphere;
+
 typedef signed int Bool;
 
 /*

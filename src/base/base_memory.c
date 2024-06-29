@@ -1,14 +1,14 @@
 #if !defined(ArenaImpl_Reserve)
-#error ArenaImpl_Reserve must be defined to use base memory.
+  #error ArenaImpl_Reserve must be defined to use base memory.
 #endif
 #if !defined(ArenaImpl_Release)
-#error ArenaImpl_Release must be defined to use base memory.
+  #error ArenaImpl_Release must be defined to use base memory.
 #endif
 #if !defined(ArenaImpl_Commit)
-#error ArenaImpl_Commit must be defined to use base memory.
+  #error ArenaImpl_Commit must be defined to use base memory.
 #endif
 #if !defined(ArenaImpl_Decommit)
-#error ArenaImpl_Decommit must be defined to use base memory.
+  #error ArenaImpl_Decommit must be defined to use base memory.
 #endif
 
 root_function Arena* ArenaAlloc(u64 size) {
@@ -23,7 +23,7 @@ root_function Arena* ArenaAlloc(u64 size) {
   arena->pos = sizeof(Arena);
   arena->commit_pos = initial_commit_size;
   arena->align = 8;
-  arena->size = 0;
+  arena->size = size;
   return arena;
 }
 

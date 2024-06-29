@@ -177,7 +177,7 @@ int main(int argc, char* argv[]) {
 
   bgfx_program_handle_t program = load_program("mesh");
 
-  Mesh* mesh = mesh_load(&resourceArena, "bunny");
+  Mesh* mesh = mesh_load(resourceArena, "bunny");
 
   SDL_ShowWindow(window);
 
