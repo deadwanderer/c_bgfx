@@ -13,6 +13,12 @@ local char* texture_folder = "textures";
 #define ChunkIndexBufferCompressed MAKEFOURCC('I', 'B', 'C', 0x1)
 #define ChunkPrimitive MAKEFOURCC('P', 'R', 'I', 0x0)
 
+local u32 uChunkVertexBuffer = MAKEFOURCC('V', 'B', ' ', 0x1);
+local u32 uChunkVertexBufferCompressed = MAKEFOURCC('V', 'B', 'C', 0x0);
+local u32 uChunkIndexBuffer = MAKEFOURCC('I', 'B', ' ', 0x0);
+local u32 uChunkIndexBufferCompressed = MAKEFOURCC('I', 'B', 'C', 0x1);
+local u32 uChunkPrimitive = MAKEFOURCC('P', 'R', 'I', 0x0);
+
 local Mesh* mesh_load(Arena* arena, const char* fileName) {
   Arena* fileArena = ArenaAlloc(Gigabytes(2));
   char buf[1024];
@@ -43,11 +49,18 @@ local Mesh* mesh_load(Arena* arena, const char* fileName) {
   Mesh* mesh = PushArrayNoZero(arena, Mesh, 1);
   mesh->arena = arena;
 
+  u32 chunkVertexBuffer = ChunkVertexBuffer;
+  u32 chunkVertexBufferCompressed = ChunkVertexBufferCompressed;
+  u32 chunkIndexBuffer = ChunkIndexBuffer;
+  u32 chunkIndexBufferCompressed = ChunkIndexBufferCompressed;
+  u32 chunkPrimitive = ChunkPrimitive;
+
   // TODO: Ready to start file parsing.
   // https://github.com/bkaradzic/bgfx/blob/master/examples/common/bgfx_utils.cpp#L380
 
   Group group;
   u32 chunk;
+  s32 result;
 
   int idx = 0;
   bool parsing = true;
@@ -57,26 +70,37 @@ local Mesh* mesh_load(Arena* arena, const char* fileName) {
     switch (chunk) {
       case ChunkVertexBuffer: {
         SDL_Log("Vertex buffer chunk");
-        BR_ReadSphere(&reader, &group.sphere);
-        BR_ReadAabb(&reader, &group.aabb);
-        BR_ReadObb(&reader, &group.obb);
+        result = BR_ReadSphere(&reader, &group.sphere);
+        result = BR_ReadAabb(&reader, &group.aabb);
+        result = BR_ReadObb(&reader, &group.obb);
 
-        BR_ReadVertexLayout(&reader, &mesh->layout);
+        result = BR_ReadVertexLayout(&reader, &mesh->layout);
 
         u16 stride = mesh->layout.stride;
 
-        BR_ReadU16(&reader, &group.numVertices);
+        result = BR_ReadU16(&reader, &group.numVertices);
 
         u32 memSize = group.numVertices * stride;
 
         void* mem = ArenaPushNoZero(arena, memSize);
-        BR_ReadBytes(&reader, mem, memSize);
+        result = BR_ReadBytes(&reader, mem, memSize);
 
         group.vbh = bgfx_create_vertex_buffer(bgfx_make_ref(mem, memSize),
                                               &mesh->layout, BGFX_BUFFER_NONE);
       } break;
       case ChunkVertexBufferCompressed: {
         SDL_Log("Compressed vertex buffer chunk");
+        result = BR_ReadSphere(&reader, &group.sphere);
+        result = BR_ReadAabb(&reader, &group.aabb);
+        result = BR_ReadObb(&reader, &group.obb);
+
+        result = BR_ReadVertexLayout(&reader, &mesh->layout);
+
+        u16 stride = mesh->layout.stride;
+
+        result = BR_ReadU16(&reader, &group.numVertices);
+
+        // void* mem = ArenaPushNoZero(arena, memSize);
       } break;
       case ChunkIndexBuffer: {
         SDL_Log("Index buffer chunk");
@@ -91,7 +115,7 @@ local Mesh* mesh_load(Arena* arena, const char* fileName) {
         SDL_Log("Unknown chunk value %d\n", chunk);
         parsing = false;
       }
-    }
+        }
   }
 
   ArenaRelease(fileArena);
@@ -133,7 +157,7 @@ local s32 BR_ReadU16(BinaryReader* reader, u16* out) {
   if (!(reader->pos + sizeof(u16) < reader->dataLen)) {
     return 0;
   }
-  *out = (u16)((u16*)reader->data)[reader->pos];
+  MemoryCopy(out, &reader->data[reader->pos], sizeof(u16));
   reader->pos += sizeof(u16);
   return sizeof(u16);
 }
@@ -142,7 +166,7 @@ local s32 BR_ReadU32(BinaryReader* reader, u32* out) {
   if (!(reader->pos + sizeof(u32) < reader->dataLen)) {
     return 0;
   }
-  *out = (u32)((u32*)reader->data)[reader->pos];
+  MemoryCopy(out, &reader->data[reader->pos], sizeof(u32));
   reader->pos += sizeof(u32);
   return sizeof(u32);
 }
@@ -151,7 +175,7 @@ local s32 BR_ReadF32(BinaryReader* reader, f32* out) {
   if (!(reader->pos + sizeof(f32) < reader->dataLen)) {
     return 0;
   }
-  *out = (f32)((f32*)reader->data)[reader->pos];
+  MemoryCopy(out, &reader->data[reader->pos], sizeof(f32));
   reader->pos += sizeof(f32);
   return sizeof(f32);
 }
@@ -160,9 +184,8 @@ local s32 BR_ReadVec3(BinaryReader* reader, Vec3* out) {
   if (!(reader->pos + sizeof(Vec3) < reader->dataLen)) {
     return 0;
   }
-  BR_ReadF32(reader, &out->X);
-  BR_ReadF32(reader, &out->Y);
-  BR_ReadF32(reader, &out->Z);
+  MemoryCopy(out, &reader->data[reader->pos], sizeof(Vec3));
+  reader->pos += sizeof(Vec3);
   return sizeof(Vec3);
 }
 
@@ -170,10 +193,8 @@ local s32 BR_ReadVec4(BinaryReader* reader, Vec4* out) {
   if (!(reader->pos + sizeof(Vec4) < reader->dataLen)) {
     return 0;
   }
-  BR_ReadF32(reader, &out->X);
-  BR_ReadF32(reader, &out->Y);
-  BR_ReadF32(reader, &out->Z);
-  BR_ReadF32(reader, &out->W);
+  MemoryCopy(out, &reader->data[reader->pos], sizeof(Vec4));
+  reader->pos += sizeof(Vec4);
   return sizeof(Vec4);
 }
 
@@ -181,10 +202,8 @@ local s32 BR_ReadMat4(BinaryReader* reader, Mat4* out) {
   if (!(reader->pos + sizeof(Mat4) < reader->dataLen)) {
     return 0;
   }
-  for (int i = 0; i < 4; i++) {
-    Vec4* vec = &out->Columns[i];
-    BR_ReadVec4(reader, vec);
-  }
+  MemoryCopy(out, &reader->data[reader->pos], sizeof(Mat4));
+  reader->pos += sizeof(Mat4);
   return sizeof(Mat4);
 }
 
@@ -192,8 +211,8 @@ local s32 BR_ReadAabb(BinaryReader* reader, Aabb* out) {
   if (!(reader->pos + sizeof(Aabb) < reader->dataLen)) {
     return 0;
   }
-  BR_ReadVec3(reader, &out->min);
-  BR_ReadVec3(reader, &out->max);
+  MemoryCopy(out, &reader->data[reader->pos], sizeof(Aabb));
+  reader->pos += sizeof(Aabb);
   return sizeof(Aabb);
 }
 
@@ -201,7 +220,8 @@ local s32 BR_ReadObb(BinaryReader* reader, Obb* out) {
   if (!(reader->pos + sizeof(Obb) < reader->dataLen)) {
     return 0;
   }
-  BR_ReadMat4(reader, &out->mtx);
+  MemoryCopy(out, &reader->data[reader->pos], sizeof(Obb));
+  reader->pos += sizeof(Obb);
   return sizeof(Obb);
 }
 
@@ -209,8 +229,8 @@ local s32 BR_ReadSphere(BinaryReader* reader, Sphere* out) {
   if (!(reader->pos + sizeof(Sphere) < reader->dataLen)) {
     return 0;
   }
-  BR_ReadVec3(reader, &out->center);
-  BR_ReadF32(reader, &out->radius);
+  MemoryCopy(out, &reader->data[reader->pos], sizeof(Sphere));
+  reader->pos += sizeof(Sphere);
   return sizeof(Sphere);
 }
 
